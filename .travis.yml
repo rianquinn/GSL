@@ -2,83 +2,265 @@
 
 language: cpp
 sudo: false
+dist: trusty
 
 cache:
   directories:
     - ${TRAVIS_BUILD_DIR}/deps/cmake
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.5.2/install
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2/install
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1/install
     - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.1/install
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.0/install
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.9.1/install
+    - ${TRAVIS_BUILD_DIR}/deps/llvm-4.0.0/install
 
 matrix:
   include:
+
+    #
+    # Git Check
+    #
+    - env: TEST=GIT_CHECK
+      os: linux
+      script:
+        - |
+          if [[ -n $(git diff --check HEAD^) ]]; then
+            echo "You must remove whitespace before submitting a pull request"
+            echo ""
+            git diff --check HEAD^
+            exit -1
+          fi
+
+    #
+    # Clang Format
+    #
+    - env: TEST=CLANG_FORMAT
+      os: linux
+      addons:
+        apt:
+          packages:
+            - llvm-4.0
+            - clang-format-4.0
+          sources:
+            - llvm-toolchain-trusty-4.0
+      script:
+        - clang-format-4.0 -i include/gsl/*
+        - |
+          if [[ -n $(git diff include/) ]]; then
+            echo "Your pull request has formatting issues!!!"
+            echo ""
+            git diff include/
+            exit -1
+          fi
+
+    #
+    # macOS (Debug)
+    #
     - env: BUILD_TYPE=Debug
       os: osx
       osx_image: xcode8
       compiler: clang
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # macOS (Release)
+    #
     - env: BUILD_TYPE=Release
       os: osx
       osx_image: xcode8
       compiler: clang
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.6 (Debug)
+    #
     - env: CLANG_VERSION=3.6 BUILD_TYPE=Debug
       os: linux
-      addons: &clang36
+      addons:
         apt:
           packages:
             - clang-3.6
             - g++-5
-          sources: &sources
+          sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
+            - llvm-toolchain-trusty-3.6
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.6 (Release)
+    #
     - env: CLANG_VERSION=3.6 BUILD_TYPE=Release
       os: linux
-      addons: *clang36
-    - env: CLANG_VERSION=3.7 BUILD_TYPE=Debug
-      os: linux
-      addons: &clang37
+      addons:
         apt:
           packages:
-            - clang-3.7
+            - clang-3.6
             - g++-5
-          sources: &sources
+          sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-    - env: CLANG_VERSION=3.7 BUILD_TYPE=Release
-      os: linux
-      addons: *clang37
+            - llvm-toolchain-trusty-3.6
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.8 (Debug)
+    #
     - env: CLANG_VERSION=3.8 BUILD_TYPE=Debug
       os: linux
-      addons: &clang38
+      addons:
         apt:
           packages:
             - clang-3.8
             - g++-5
-          sources: &sources
+          sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
+            - llvm-toolchain-trusty-3.8
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.8 (Release)
+    #
     - env: CLANG_VERSION=3.8 BUILD_TYPE=Release
       os: linux
-      addons: *clang38
+      addons:
+        apt:
+          packages:
+            - clang-3.8
+            - g++-5
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-3.8
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.9 (Debug)
+    #
+    - env: CLANG_VERSION=3.9 BUILD_TYPE=Debug
+      os: linux
+      addons:
+        apt:
+          packages:
+            - clang-3.9
+            - g++-6
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-3.9
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 3.9 (Release)
+    #
+    - env: CLANG_VERSION=3.9 BUILD_TYPE=Release
+      os: linux
+      addons:
+        apt:
+          packages:
+            - clang-3.9
+            - g++-6
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-3.9
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 4.0 (Debug)
+    #
+    - env: CLANG_VERSION=4.0 BUILD_TYPE=Debug
+      os: linux
+      addons:
+        apt:
+          packages:
+            - clang-4.0
+            - g++-6
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-4.0
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux Clang 4.0 (Release)
+    #
+    - env: CLANG_VERSION=4.0 BUILD_TYPE=Release
+      os: linux
+      addons:
+        apt:
+          packages:
+            - clang-4.0
+            - g++-6
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-4.0
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux GCC 5 (Debug)
+    #
     - env: GCC_VERSION=5 BUILD_TYPE=Debug
       os: linux
-      addons: &gcc5
+      addons:
         apt:
           packages: g++-5
-          sources: *sources
+          sources: ubuntu-toolchain-r-test
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux GCC 5 (Release)
+    #
     - env: GCC_VERSION=5 BUILD_TYPE=Release
       os: linux
-      addons: *gcc5
+      addons:
+        apt:
+          packages: g++-5
+          sources: ubuntu-toolchain-r-test
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux GCC 6 (Debug)
+    #
     - env: GCC_VERSION=6 BUILD_TYPE=Debug
       os: linux
-      addons: &gcc6
+      addons:
         apt:
           packages: g++-6
-          sources: *sources
+          sources: ubuntu-toolchain-r-test
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
+
+    #
+    # Linux GCC 6 (Release)
+    #
     - env: GCC_VERSION=6 BUILD_TYPE=Release
       os: linux
-      addons: *gcc6
+      addons:
+        apt:
+          packages: g++-6
+          sources: ubuntu-toolchain-r-test
+      script:
+        - make -j$JOBS
+        - CTEST_OUTPUT_ON_FAILURE=yes make test
 
 install:
   - if [[ -n "$CLANG_VERSION" ]]; then export CXX=clang++-$CLANG_VERSION CC=clang-$CLANG_VERSION; fi
@@ -108,9 +290,9 @@ install:
     if [[ -n "$CLANG_VERSION" && "${TRAVIS_OS_NAME}" == "linux" && "${STDLIB}" != "libstdc++" ]]; then
       if [[ "$CLANG_VERSION" == "3.5" ]]; then LLVM_VERSION="3.5.2"; fi
       if [[ "$CLANG_VERSION" == "3.6" ]]; then LLVM_VERSION="3.6.2"; fi
-      if [[ "$CLANG_VERSION" == "3.7" ]]; then LLVM_VERSION="3.7.1"; fi
       if [[ "$CLANG_VERSION" == "3.8" ]]; then LLVM_VERSION="3.8.1"; fi
-      if [[ "$CLANG_VERSION" == "3.9" ]]; then LLVM_VERSION="3.9.0"; fi
+      if [[ "$CLANG_VERSION" == "3.9" ]]; then LLVM_VERSION="3.9.1"; fi
+      if [[ "$CLANG_VERSION" == "4.0" ]]; then LLVM_VERSION="4.0.0"; fi
       LLVM_ROOT="${DEPS_DIR}/llvm-${LLVM_VERSION}"
       LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
       LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
@@ -131,12 +313,7 @@ install:
 
 before_script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - cmake . -Bbuild -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_C_COMPILER="$CC" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-  - cmake --build build -- -j$JOBS
-
-script:
-  - cd build
-  - ctest --output-on-failure -j$JOBS
+  - cmake . -DCMAKE_CXX_COMPILER="$CXX" -DCMAKE_C_COMPILER="$CC" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 notifications:
   email: false

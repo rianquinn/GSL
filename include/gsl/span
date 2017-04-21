@@ -117,8 +117,8 @@ namespace details
 
     template <std::ptrdiff_t From, std::ptrdiff_t To>
     struct is_allowed_extent_conversion
-        : public std::integral_constant<bool, From == To || From == gsl::dynamic_extent ||
-                                                  To == gsl::dynamic_extent>
+        : public std::integral_constant<
+              bool, From == To || From == gsl::dynamic_extent || To == gsl::dynamic_extent>
     {
     };
 
